@@ -2,7 +2,12 @@ import argparse
 import sys
 import itertools
 import codecs
+import encoder
 from ssl import PROTOCOL_TLSv1
+import six
+
+import simplejson as json
+import re
 
 try:
     import cassandra
@@ -48,23 +53,62 @@ def table_to_cqlfile(session, keyspace, tablename, flt, tableval, filep, limit=0
 
     cnt = 0
 
+    def json_default(val):
+        return str(val)
+
+    def cql_encode_object(val):
+        """
+        Default encoder for all objects that do not have a specific encoder function
+        registered. This function simply calls :meth:`str()` on the object.
+        """
+        if isinstance(val, object):
+            #if our object is a UDT, give cassandra what it wants (using JSON to process), and regex to clean
+            if type(val).__module__.startswith("cassandra"):
+                return re.sub(r': "(\S*?)"', ': \'\\1\'', re.sub(r'(?<!: )"(\S*?)"', '\\1', json.dumps(val, namedtuple_as_object=True, default=json_default).replace("\'","\'\'")))
+        return str(val)
+
+    def cql_encode_map_collection(val):
+        """
+        Converts a dict into a string of the form ``{key1: val1, key2: val2, ...}``.
+        This is suitable for ``map`` type columns.
+        """
+        return '{%s}' % ', '.join('%s: %s' % (
+            session.encoder.mapping.get(type(k), cql_encode_object)(k),
+            session.encoder.mapping.get(type(v), cql_encode_object)(v)
+        ) for k, v in six.iteritems(val))
+
+    def cql_encode_set_collection(val):
+        """
+        Converts a sequence to a string of the form ``{item1, item2, ...}``.  This
+        is suitable for ``set`` type columns.
+        """
+        return '{%s}' % ', '.join(session.encoder.mapping.get(type(v), cql_encode_object)(v) for v in val)
+
+    def cql_encode_list_collection(self, val):
+        """
+        Converts a sequence to a string of the form ``[item1, item2, ...]``.  This
+        is suitable for ``list`` type columns.
+        """
+        return '[%s]' % ', '.join(session.encoder.mapping.get(type(v), cql_encode_object)(v) for v in val)
+
+
     def make_non_null_value_encoder(typename):
         if typename == 'blob':
             return session.encoder.cql_encode_bytes
         elif typename.startswith('map'):
-            return session.encoder.cql_encode_map_collection
+            return cql_encode_map_collection       
         elif typename.startswith('set'):
-            return session.encoder.cql_encode_set_collection
+            return cql_encode_set_collection
         elif typename.startswith('list'):
-            return session.encoder.cql_encode_list_collection
+            return cql_encode_list_collection
         else:
-            return session.encoder.cql_encode_all_types
+            return  session.encoder.cql_encode_all_types
 
     def make_value_encoder(typename):
         e = make_non_null_value_encoder(typename)
         return lambda v: session.encoder.cql_encode_all_types(v) if v is None else e(v)
 
-    def make_value_encoders(tableval):
+    def make_value_encoders(tableval):        
         return dict((to_utf8(k), make_value_encoder(cql_type(v))) for k, v in tableval.columns.iteritems())
 
     def make_row_encoder():
