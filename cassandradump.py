@@ -5,9 +5,6 @@ import codecs
 from ssl import PROTOCOL_TLSv1
 import six
 
-import simplejson as json
-import re
-
 try:
     import cassandra
     import cassandra.concurrent
@@ -51,9 +48,6 @@ def table_to_cqlfile(session, keyspace, tablename, flt, tableval, filep, limit=0
     rows = session.execute(query)
 
     cnt = 0
-
-    def json_default(val):
-        return str(val)
 
     def cql_encode_object(val):
         """
