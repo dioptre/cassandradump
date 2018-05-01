@@ -62,9 +62,11 @@ def table_to_cqlfile(session, keyspace, tablename, flt, tableval, filep, limit=0
         """
         if isinstance(val, object):
             #if our object is a UDT, give cassandra what it wants (using JSON to process), and regex to clean
-            if type(val).__module__.startswith("cassandra"):
-                #return session.encoder.cql_encode_all_types(val)
-                return re.sub(r'"(\S*?)"(?<![\},])', '\'\\1\'', re.sub(r'(?<!: )"(\S*?)"', '\\1', json.dumps(val, namedtuple_as_object=True, default=json_default).replace("\'","\'\'")))
+            if type(val).__module__.startswith("cassandra"):            
+                return '{%s}' % ', '.join('%s: %s' % (
+                    k,
+                    session.encoder.mapping.get(type(v), cql_encode_object)(v)
+                ) for k, v in six.iteritems(val.__dict__))
         return str(val)
 
     def cql_encode_map_collection(val):
