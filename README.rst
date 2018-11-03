@@ -32,6 +32,13 @@ It's still missing many major Cassandra features that I don't use daily,
 so feel free to open an issue pointing them out (or send a pull request)
 if you need something.
 
+Setup
+-----
+
+:: 
+    python setup.py install
+    
+
 Usage
 -----
 
