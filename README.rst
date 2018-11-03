@@ -37,7 +37,7 @@ Setup
 
 :: 
     python setup.py install
-    
+::    
 
 Usage
 -----
