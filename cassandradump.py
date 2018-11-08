@@ -1,5 +1,6 @@
 import argparse
 import sys
+import json
 import itertools
 import codecs
 from ssl import PROTOCOL_TLSv1
@@ -61,7 +62,7 @@ def table_to_cqlfile(session, keyspace, tablename, flt, tableval, filep, limit=0
                     k,
                     session.encoder.mapping.get(type(v), cql_encode_object)(v)
                 ) for k, v in six.iteritems(val.__dict__))
-        return str(val)
+        return session.encoder.cql_encode_all_types(val)
 
     def cql_encode_map_collection(val):
         """
@@ -98,7 +99,7 @@ def table_to_cqlfile(session, keyspace, tablename, flt, tableval, filep, limit=0
         elif typename.startswith('list'):
             return cql_encode_list_collection
         else:
-            return  session.encoder.cql_encode_all_types
+            return  cql_encode_object
 
     def make_value_encoder(typename):
         e = make_non_null_value_encoder(typename)
