@@ -98,6 +98,8 @@ def table_to_cqlfile(session, keyspace, tablename, flt, tableval, filep, limit=0
             return cql_encode_set_collection
         elif typename.startswith('list'):
             return cql_encode_list_collection
+        elif typename.startswith('date'):
+            return session.encoder.cql_encode_all_types            
         else:
             return  cql_encode_object
 
