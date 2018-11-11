@@ -99,7 +99,39 @@ def table_to_cqlfile(session, keyspace, tablename, flt, tableval, filep, limit=0
         elif typename.startswith('list'):
             return cql_encode_list_collection
         elif typename.startswith('date'):
-            return session.encoder.cql_encode_all_types            
+            return session.encoder.cql_encode_all_types    
+        elif typename.startswith('ascii'):
+            return session.encoder.cql_encode_all_types                
+        elif typename.startswith('bigint'):
+            return session.encoder.cql_encode_all_types                
+        elif typename.startswith('blob'):
+            return session.encoder.cql_encode_all_types                
+        elif typename.startswith('boolean'):
+            return session.encoder.cql_encode_all_types                
+        elif typename.startswith('counter'):
+            return session.encoder.cql_encode_all_types                
+        elif typename.startswith('decimal'):
+            return session.encoder.cql_encode_all_types                
+        elif typename.startswith('double'):
+            return session.encoder.cql_encode_all_types                
+        elif typename.startswith('float'):
+            return session.encoder.cql_encode_all_types                
+        elif typename.startswith('inet'):
+            return session.encoder.cql_encode_all_types                
+        elif typename.startswith('int'):
+            return session.encoder.cql_encode_all_types                
+        elif typename.startswith('text'):
+            return session.encoder.cql_encode_all_types                
+        elif typename.startswith('timestamp'):
+            return session.encoder.cql_encode_all_types                
+        elif typename.startswith('timeuuid'):
+            return session.encoder.cql_encode_all_types                
+        elif typename.startswith('uuid'):
+            return session.encoder.cql_encode_all_types                
+        elif typename.startswith('varchar'):
+            return session.encoder.cql_encode_all_types                
+        elif typename.startswith('varint'):
+            return session.encoder.cql_encode_all_types                
         else:
             return  cql_encode_object
 
