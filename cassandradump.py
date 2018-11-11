@@ -50,6 +50,20 @@ def table_to_cqlfile(session, keyspace, tablename, flt, tableval, filep, limit=0
 
     cnt = 0
 
+    def cql_encode_string(val):
+        """
+        Default encoder for all objects that do not have a specific encoder function
+        registered. This function simply calls :meth:`str()` on the object.
+        """
+        if isinstance(val, object):
+            #if our object is a UDT, give cassandra what it wants (using JSON to process), and regex to clean
+            if type(val).__module__.startswith("cassandra"):            
+                return '{%s}' % ', '.join('%s: %s' % (
+                    k,
+                    session.encoder.mapping.get(type(v), cql_encode_object)(v)
+                ) for k, v in six.iteritems(val.__dict__))
+        return str(val)
+
     def cql_encode_object(val):
         """
         Default encoder for all objects that do not have a specific encoder function
@@ -121,7 +135,7 @@ def table_to_cqlfile(session, keyspace, tablename, flt, tableval, filep, limit=0
         elif typename.startswith('int'):
             return session.encoder.cql_encode_all_types                
         elif typename.startswith('text'):
-            return session.encoder.cql_encode_all_types                
+            return cql_encode_string                 
         elif typename.startswith('timestamp'):
             return session.encoder.cql_encode_all_types                
         elif typename.startswith('timeuuid'):
@@ -129,7 +143,7 @@ def table_to_cqlfile(session, keyspace, tablename, flt, tableval, filep, limit=0
         elif typename.startswith('uuid'):
             return session.encoder.cql_encode_all_types                
         elif typename.startswith('varchar'):
-            return session.encoder.cql_encode_all_types                
+            return cql_encode_string                
         elif typename.startswith('varint'):
             return session.encoder.cql_encode_all_types                
         else:
